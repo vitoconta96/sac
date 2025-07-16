@@ -5,39 +5,24 @@ class GaugeChart extends HTMLElement {
     this.attachShadow({ mode: "open" });
   }
 
-  connectedCallback() {
-    this.render();
-  }
-
   set value(val) {
     this._value = val;
     this.render();
   }
 
+  connectedCallback() {
+    this.render();
+  }
+
   render() {
     this.shadowRoot.innerHTML = `
-      <canvas id="gaugeCanvas" width="200" height="200"></canvas>
+      <canvas id="gauge" width="200" height="100"></canvas>
     `;
-
-    const ctx = this.shadowRoot.getElementById("gaugeCanvas").getContext("2d");
-
+    const ctx = this.shadowRoot.getElementById("gauge").getContext("2d");
     new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        datasets: [{
-          data: [this._value, 100 - this._value],
-          backgroundColor: ['#00aaff', '#eeeeee'],
-          borderWidth: 0
-        }]
-      },
-      options: {
-        circumference: Math.PI,
-        rotation: Math.PI,
-        cutout: '80%',
-        plugins: {
-          legend: { display: false }
-        }
-      }
+      type: "doughnut",
+      data: { datasets: [{ data: [this._value, 100 - this._value], backgroundColor: ["#00aaff", "#eeeeee"], borderWidth: 0 }]},
+      options: { circumference: Math.PI, rotation: Math.PI, cutout: "80%", plugins: { legend: { display: false } } }
     });
   }
 }
