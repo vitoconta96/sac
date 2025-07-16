@@ -1,53 +1,62 @@
-(function()  {
-	let template = document.createElement("template");
-	template.innerHTML = `
-		<form id="form">
-			<fieldset>
-				<legend>Color Properties</legend>
-				<table>
-					<tr>
-						<td>Color</td>
-						<td><input id="bps_color" type="text" size="10" maxlength="10"></td>
-					</tr>
-				</table>
-				<input type="submit" style="display:none;">
-			</fieldset>
-		</form>
-		<style>
-		:host {
-			display: block;
-			padding: 1em 1em 1em 1em;
-		}
-		</style>
-	`;
+class GaugeChart extends HTMLElement {
+  constructor() {
+    super();
+    this._value = 50;
+    this.attachShadow({ mode: "open" });
+  }
 
-	class BoxBps extends HTMLElement {
-		constructor() {
-			super();
-			this._shadowRoot = this.attachShadow({mode: "open"});
-			this._shadowRoot.appendChild(template.content.cloneNode(true));
-			this._shadowRoot.getElementById("form").addEventListener("submit", this._submit.bind(this));
-		}
+  set value(val) {
+    this._value = val;
+    this.render();
+  }
 
-		_submit(e) {
-			e.preventDefault();
-			this.dispatchEvent(new CustomEvent("propertiesChanged", {
-					detail: {
-						properties: {
-							color: this.color
-						}
-					}
-			}));
-		}
+  connectedCallback() {
+    this.render();
+  }
 
-		set color(newColor) {
-			this._shadowRoot.getElementById("bps_color").value = newColor;
-		}
+  render() {
+    this.shadowRoot.innerHTML = `
+      <style>
+        #gauge {
+          width: 200px;
+          height: 100px;
+        }
+      </style>
+      <canvas id="gauge" width="200" height="100"></canvas>
+    `;
+    const ctx = this.shadowRoot.getElementById("gauge").getContext("2d");
 
-		get color() {
-			return this._shadowRoot.getElementById("bps_color").value;
-		}
-	}
+    // Usa Chart.js dal CDN
+    if (!window.Chart) {
+      const script = document.createElement('script');
+      script.src = "https://cdn.jsdelivr.net/npm/chart.js";
+      script.onload = () => this.drawChart(ctx);
+      this.shadowRoot.appendChild(script);
+    } else {
+      this.drawChart(ctx);
+    }
+  }
 
-	customElements.define("com-demo-box-bps", BoxBps);
-})();
+  drawChart(ctx) {
+    new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        datasets: [{
+          data: [this._value, 100 - this._value],
+          backgroundColor: ["#00aaff", "#eeeeee"],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        circumference: Math.PI,
+        rotation: Math.PI,
+        cutout: "80%",
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+}
+
+customElements.define("custom-gauge", GaugeChart);
